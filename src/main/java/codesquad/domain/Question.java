@@ -1,5 +1,6 @@
 package codesquad.domain;
 
+import codesquad.exception.UnAuthorizedException;
 import org.hibernate.annotations.Where;
 import support.domain.AbstractEntity;
 import support.domain.UrlGeneratable;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 public class Question extends AbstractEntity implements UrlGeneratable {
@@ -68,6 +70,9 @@ public class Question extends AbstractEntity implements UrlGeneratable {
         answer.toQuestion(this);
         answers.add(answer);
     }
+    public List<Answer> getAnswers(){
+        return this.answers;
+    }
 
     public boolean isOwner(User loginUser) {
         return writer.equals(loginUser);
@@ -75,6 +80,18 @@ public class Question extends AbstractEntity implements UrlGeneratable {
 
     public boolean isDeleted() {
         return deleted;
+    }
+
+    public List<DeleteHistory> delete(User loginUser) {
+        if (!this.getWriter().equals(loginUser)) {
+            throw new UnAuthorizedException();
+        }
+        List<DeleteHistory> list= answers.stream()
+                .map(answer -> answer.delete(loginUser))
+                .collect(Collectors.toList());
+        this.deleted = true;
+        list.add(new DeleteHistory(ContentType.QUESTION, this.getId(), loginUser, this.getCreatedAt()));
+        return list;
     }
 
     @Override
@@ -85,5 +102,14 @@ public class Question extends AbstractEntity implements UrlGeneratable {
     @Override
     public String toString() {
         return "Question [id=" + getId() + ", title=" + title + ", contents=" + contents + ", writer=" + writer + "]";
+    }
+
+    public Question update(User loginUser, QuestionDTO target) {
+        if (!this.getWriter().equals(loginUser)) {
+            throw new UnAuthorizedException();
+        }
+        this.title = target.getTitle();
+        this.contents = target.getContent();
+        return this;
     }
 }

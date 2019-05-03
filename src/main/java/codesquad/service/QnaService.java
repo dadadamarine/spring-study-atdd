@@ -1,6 +1,5 @@
 package codesquad.service;
 
-import codesquad.CannotDeleteException;
 import codesquad.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,8 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service("qnaService")
 public class QnaService {
@@ -25,25 +25,15 @@ public class QnaService {
     @Resource(name = "deleteHistoryService")
     private DeleteHistoryService deleteHistoryService;
 
-    public Question create(User loginUser, Question question) {
+    public Question create(User loginUser, QuestionDTO questionDTO) {
+        Question question = new Question(questionDTO.getTitle(), questionDTO.getContent());
         question.writeBy(loginUser);
-        log.debug("question : {}", question);
         return questionRepository.save(question);
     }
 
-    public Optional<Question> findById(long id) {
-        return questionRepository.findById(id);
-    }
-
     @Transactional
-    public Question update(User loginUser, long id, Question updatedQuestion) {
-        // TODO 수정 기능 구현
-        return null;
-    }
-
-    @Transactional
-    public void deleteQuestion(User loginUser, long questionId) throws CannotDeleteException {
-        // TODO 삭제 기능 구현
+    public Question update(User loginUser, QuestionDTO updatedQuestionDTO, long id) {
+        return questionRepository.save(findById(id).update(loginUser, updatedQuestionDTO));
     }
 
     public Iterable<Question> findAll() {
@@ -54,13 +44,40 @@ public class QnaService {
         return questionRepository.findAll(pageable).getContent();
     }
 
+    public Iterable<Answer> findAllAnswer(Long questionId) {
+        return findById(questionId).getAnswers();
+    }
+
     public Answer addAnswer(User loginUser, long questionId, String contents) {
-        // TODO 답변 추가 기능 구현
-        return null;
+        Answer answer = new Answer(loginUser, contents);
+        answer.toQuestion(findById(questionId));
+        return answerRepository.save(answer);
     }
 
     public Answer deleteAnswer(User loginUser, long id) {
-        // TODO 답변 삭제 기능 구현 
-        return null;
+        Answer answer = answerRepository.findByIdAndDeleted(id, false).orElseThrow(EntityNotFoundException::new);
+        answer.delete();
+        DeleteHistory deleteHistory = new DeleteHistory(ContentType.ANSWER, id, loginUser, answer.getCreatedAt());
+        deleteHistoryService.save(deleteHistory);
+        return answerRepository.save(answer);
+    }
+
+    public Question findById(Long id) {
+        return questionRepository.findByIdAndDeleted(id, false).orElseThrow(EntityNotFoundException::new);
+    }
+
+    public List<Question> findAllNotDeleted() {
+        return questionRepository.findAll().stream().filter(question -> !question.isDeleted()).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Question delete(User loginUser, Long questionId) {
+        Question question = findById(questionId);
+        deleteHistoryService.saveAll(question.delete(loginUser));
+        return questionRepository.save(question);
+    }
+
+    public Answer findAnswerByIdNotDeleted(Long answerId) {
+        return answerRepository.findById(answerId).filter(answer -> !answer.isDeleted()).orElseThrow(EntityNotFoundException::new);
     }
 }

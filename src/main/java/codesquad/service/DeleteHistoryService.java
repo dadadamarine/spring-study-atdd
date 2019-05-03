@@ -15,9 +15,14 @@ public class DeleteHistoryService {
     private DeleteHistoryRepository deleteHistoryRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveAll(List<DeleteHistory> deleteHistories) {
+    public List<DeleteHistory> saveAll(List<DeleteHistory> deleteHistories) {
         for (DeleteHistory deleteHistory : deleteHistories) {
             deleteHistoryRepository.save(deleteHistory);
         }
+        return deleteHistories;
+    }
+
+    public void save(DeleteHistory deleteHistory) {
+        deleteHistoryRepository.save(deleteHistory);
     }
 }
