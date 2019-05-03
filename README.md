@@ -1,4 +1,8 @@
 # 질문답변 게시판
+
+## 해당 Repository의 원격저장소는 [새싹스터디-atdd-minseok브런치](https://github.com/sproutt/spring-study-atdd/tree/econo-minseok)에 있습니다.
+
+
 ## 진행 방법
 * 질문답변 게시판에 대한 html template은 src/main/resources 디렉토리의 static에서 확인할 수 있다. html template을 통해 요구사팡을 파악한다.
 * 요구사항에 대한 구현을 완료한 후 자신의 github 아이디에 해당하는 브랜치에 Pull Request(이하 PR)를 통해 코드 리뷰 요청을 한다.
