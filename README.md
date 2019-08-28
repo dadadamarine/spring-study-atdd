@@ -1,6 +1,6 @@
 # 질문답변 게시판
 
-## 해당 Repository의 원격저장소는 [새싹스터디-atdd-minseok브런치](https://github.com/sproutt/spring-study-atdd/tree/econo-minseok)에 있습니다.
+## 해당 Repository의 원격저장소는 [새싹스터디-atdd-minseok브치](https://github.com/sproutt/spring-study-atdd/tree/econo-minseok)에 있습니다.
 
 
 ## 진행 방법
